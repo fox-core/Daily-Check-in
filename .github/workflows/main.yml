@@ -1,0 +1,32 @@
+name: Daily Check-in
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 时间 00:00 运行
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Perform check-in
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Accept: */*" \
+            -H "Accept-Encoding: gzip, deflate, br, zstd" \
+            -H "Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7" \
+            -H "Cache-Control: no-cache" \
+            -H "Cookie: lang=zh-cn; auth=$AUTH_TOKEN; announcement=2024-08-01" \
+            "https://board.ouonet.work/skyapi?action=checkin")
+          
+          if [ "$response" = "200" ]; then
+            echo "Check-in successful"
+          else
+            echo "Check-in failed with status code: $response"
+            exit 1
+          fi
